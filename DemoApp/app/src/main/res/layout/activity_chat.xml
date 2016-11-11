@@ -1,0 +1,14 @@
+<FrameLayout
+    android:id="@+id/fragment_container"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="fill_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin">
+
+    <fragment
+        android:id="@+id/messaging_fragment"
+        android:name="it.slyce.messaging.SlyceMessagingFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+</FrameLayout>

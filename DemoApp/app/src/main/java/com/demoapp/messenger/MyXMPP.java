@@ -1,4 +1,4 @@
-package com.demoapp.messenger.messenger;
+package com.demoapp.messenger;
 
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -13,6 +13,8 @@ import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.chat.Chat;
 import org.jivesoftware.smack.chat.ChatManager;
+import org.jivesoftware.smack.chat.ChatMessageListener;
+import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 
@@ -23,8 +25,8 @@ import java.io.IOException;
  */
 public class MyXMPP {
 
-    private static final String DOMAIN = "nimbuzz.com";
-    private static final String HOST = "o.nimbuzz.com";
+    // TODO change to your server
+    private static final String DOMAIN = "jabber.at";
     private static final int PORT = 5222;
     private String userName ="";
     private String passWord = "";
@@ -37,6 +39,7 @@ public class MyXMPP {
     private boolean chat_created;
     private boolean loggedin;
 
+    OnChatMessageServiceListener mOnChatMessageServiceListener;
 
     //Initialize
     public void init(String userId,String pwd ) {
@@ -45,15 +48,19 @@ public class MyXMPP {
         this.passWord = pwd;
         XMPPTCPConnectionConfiguration.Builder configBuilder = XMPPTCPConnectionConfiguration.builder();
         configBuilder.setUsernameAndPassword(userName, passWord);
-        configBuilder.setSecurityMode(ConnectionConfiguration.SecurityMode.disabled);
+        configBuilder.setSecurityMode(ConnectionConfiguration.SecurityMode.required);
         configBuilder.setResource("Android");
         configBuilder.setServiceName(DOMAIN);
-        configBuilder.setHost(HOST);
+        //configBuilder.setHost(HOST);
         configBuilder.setPort(PORT);
-        //configBuilder.setDebuggerEnabled(true);
+        configBuilder.setDebuggerEnabled(true);
         connection = new XMPPTCPConnection(configBuilder.build());
         connection.addConnectionListener(connectionListener);
 
+    }
+
+    public void setOnChatMessageServiceListener(OnChatMessageServiceListener onChatMessageServiceListener) {
+        mOnChatMessageServiceListener = onChatMessageServiceListener;
     }
 
     // Disconnect Function
@@ -93,14 +100,11 @@ public class MyXMPP {
     }
 
 
-    public void sendMsg() {
+    public void sendMsg(String msg) {
         if (connection.isConnected()== true) {
             // Assume we've created an XMPPConnection name "connection"._
-            chatmanager = ChatManager.getInstanceFor(connection);
-            newChat = chatmanager.createChat("concurer@nimbuzz.com");
-
             try {
-                newChat.sendMessage("Howdy!");
+                newChat.sendMessage(msg);
             } catch (SmackException.NotConnectedException e) {
                 e.printStackTrace();
             }
@@ -111,8 +115,27 @@ public class MyXMPP {
 
         try {
             connection.login(userName, passWord);
-            //Log.i("LOGIN", "Yey! We're connected to the Xmpp server!");
+            Log.i("LOGIN", "Yey! We're connected to the Xmpp server!");
 
+            chatmanager = ChatManager.getInstanceFor(connection);
+            newChat = chatmanager.createChat("vlab.smartapps@jabber.at");
+            newChat.addMessageListener(new ChatMessageListener() {
+                @Override
+                public void processMessage(Chat chat, Message message) {
+                    // TODO Vinhtt
+                    System.out.println(">>> MyXMPP -> processMessage received : message.getBody() " + message.getBody());
+                    if(mOnChatMessageServiceListener != null){
+                        mOnChatMessageServiceListener.onChatMessageReceived(message.getBody());
+                    }
+
+                }
+            });
+
+            sendMsg("I Logged in success");
+
+            if (mOnChatMessageServiceListener != null) {
+                mOnChatMessageServiceListener.onLoginChatSuccess();
+            }
         } catch (XMPPException | SmackException | IOException e) {
             e.printStackTrace();
         } catch (Exception e) {
@@ -254,5 +277,9 @@ public class MyXMPP {
         }
     }
 
+    public interface OnChatMessageServiceListener {
+        void onLoginChatSuccess();
+        void onChatMessageReceived(String message);
+    }
 
 }

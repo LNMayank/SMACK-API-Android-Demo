@@ -1,17 +1,19 @@
-package com.demoapp.messenger.messenger;
+package com.demoapp.messenger;
 
-        import android.content.ComponentName;
-        import android.content.Intent;
-        import android.content.ServiceConnection;
-        import android.os.IBinder;
-        import android.support.v7.app.AppCompatActivity;
-        import android.os.Bundle;
-        import android.util.Log;
-        import android.view.Menu;
-        import android.view.MenuItem;
-        import android.view.View;
-        import android.widget.EditText;
-        import com.demoapp.messenger.R;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.EditText;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -48,6 +50,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        registerReceiver(mBroadcastReceiver, new IntentFilter(ChatActivity.ACTION_CHAT_AUTHENTICATED));
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unregisterReceiver(mBroadcastReceiver);
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -81,9 +95,6 @@ public class MainActivity extends AppCompatActivity {
            intent.putExtra("user",userName);
            intent.putExtra("pwd",passWord);
            startService(intent);
-
-
-
            //mService.connectConnection(intent);
        }
        catch (Exception e)
@@ -92,7 +103,13 @@ public class MainActivity extends AppCompatActivity {
        }
     }
 
-
+    BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            startActivity(new Intent(getApplicationContext(), ChatActivity.class));
+            finish();
+        }
+    };
 
 
 }
